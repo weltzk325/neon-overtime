@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#070a12" />
+<title>OVERTIME · 加班地狱</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23070b14'/%3E%3Ctext x='32' y='47' font-family='Arial' font-size='48' font-weight='900' fill='%2339f4ff' text-anchor='middle'%3E%E2%88%9E%3C/text%3E%3C/svg%3E" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div id="app">
+  <div id="stage-wrap">
+    <div id="stage">
+      <canvas id="game" width="1600" height="900"></canvas>
+      <div class="post-fx" aria-hidden="true">
+        <div class="fx-vignette"></div>
+        <div class="fx-scan"></div>
+        <div class="fx-noise"></div>
+        <div class="fx-flash" id="fx-flash"></div>
+      </div>
+
+      <div id="ui">
+
+        <!-- ================= BOOT ================= -->
+        <section id="screen-boot" class="screen boot is-active">
+          <div class="boot-inner">
+            <div class="boot-logo">∞</div>
+            <div class="boot-corp">无限公司 <span>INFINITY CORP.</span></div>
+            <div class="boot-line"><i id="boot-bar"></i></div>
+            <div class="boot-log" id="boot-log">正在接入公司内网…</div>
+          </div>
+        </section>
+
+        <!-- ================= MENU ================= -->
+        <section id="screen-menu" class="screen menu" hidden>
+          <div class="menu-top">
+            <div class="corp-id">
+              <div class="corp-mark">∞</div>
+              <div class="corp-txt"><b>无限公司</b><span>INFINITY CORP. · 24F</span></div>
+            </div>
+            <div class="menu-top-actions">
+              <button class="icon-btn" id="btn-codex-menu"><img class="px-ico" src="assets/ui/pxlkit/scroll.png" alt="" /><span>异常图鉴</span></button>
+              <button class="icon-btn" id="btn-manual-menu"><img class="px-ico" src="assets/ui/pxlkit/menu.png" alt="" /><span>员工手册</span></button>
+              <button class="icon-btn" id="btn-training-menu"><img class="px-ico" src="assets/ui/pxlkit/level-up.png" alt="" /><span>员工培训</span></button>
+              <button class="icon-btn" id="btn-settings-menu"><img class="px-ico" src="assets/ui/pxlkit/gear.png" alt="" /><span>设置</span></button>
+              <button class="icon-btn sound-btn" id="btn-sound" title="声音开关"><img class="px-ico" id="sound-glyph" src="assets/ui/pxlkit/bell.png" alt="" /></button>
+            </div>
+          </div>
+
+          <div class="menu-hero">
+            <div class="hero-left">
+              <div class="eyebrow"><span class="live-dot"></span>超能都市 · 办公室求生 <em>ROGUELIKE</em></div>
+              <h1 class="logo">
+                <span class="logo-en" data-text="OVERTIME">OVERTIME</span>
+                <span class="logo-cn">加班地狱</span>
+              </h1>
+              <p class="tagline">午夜 00:00，整栋大楼醒了。<br />你只剩一身超能力，和一台会咬人的打印机。</p>
+              <div class="menu-cta">
+                <button id="btn-start" class="btn btn-primary btn-start">
+                  <span class="btn-ico">▶</span><span>开始加班</span><em>ENTER</em>
+                </button>
+                <div class="cta-note">6 房间 · 4 武器 · 2 员工 · 1 个 Boss</div>
+                <button class="btn btn-ghost" id="btn-challenges">挑战合同 · CHALLENGES ↗</button>
+                <button class="story-link" id="btn-story-menu">▷ 看剧情 / STORY</button>
+              </div>
+              <div class="best-line">
+                <div><img class="best-ico" src="assets/ui/pxlkit/trophy.png" alt="" /><span class="best-label">最高绩效</span><strong id="best-score">0</strong></div>
+                <div class="best-sep"></div>
+                <div><span class="best-label">最远楼层</span><strong id="best-room">—</strong></div>
+                <div class="best-sep"></div>
+                <div><span class="best-label">绩效点</span><strong id="menu-points">0</strong></div>
+              </div>
+            </div>
+
+            <aside class="hero-right">
+              <div class="side-head menu-employee">
+                <img class="menu-portrait" id="menu-portrait" src="assets/abigail_full.webp" alt="当前员工立绘" draggable="false" />
+                <div class="menu-employee-info">
+                  <div class="panel-tag">当前员工 / ON DUTY</div>
+                  <b id="menu-char-name">阿比盖尔</b>
+                  <span id="menu-char-skill">Q 死线 · R 凝视</span>
+                </div>
+                <button class="link-btn dossier-link" id="btn-dossier">档案 ↗</button>
+              </div>
+              <div class="side-sub roster-sub">SHIFT ROSTER / 选择你的打工人</div>
+              <div id="char-list" class="char-list"></div>
+              <div class="side-head side-head-weapon">
+                <div class="panel-tag">初始武器</div>
+                <div class="side-sub">LOADOUT</div>
+              </div>
+              <div id="weapon-list" class="weapon-list"></div>
+              <p class="char-desc" id="char-desc"></p>
+            </aside>
+          </div>
+
+          <div class="menu-bottom">
+            <div class="marquee"><div class="marquee-track" id="marquee-track"></div></div>
+            <div class="menu-meta">
+              <span>WASD 移动</span><span>鼠标瞄准 · 左键开火/聚焦</span><span>SPACE 闪避</span><span>Q / R 技能</span><span>ESC 暂停</span>
+              <b>戴上耳机 · 风味更佳</b>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= HUD ================= -->
+        <section id="screen-hud" class="hud" hidden>
+          <div id="challenge-hud" class="challenge-hud" hidden></div>
+          <div class="hud-tl">
+            <div class="portrait">
+              <canvas id="portrait" width="96" height="96"></canvas>
+              <span class="lv" id="hud-level">LV.1</span>
+            </div>
+            <div class="vitals">
+              <div class="hud-name"><b id="hud-char">阿码</b><i id="hud-title">夜班程序员</i></div>
+              <div class="hp-bar">
+                <div class="hp-fill" id="hp-fill"></div>
+                <div class="hp-loss" id="hp-loss"></div>
+                <div class="hp-ticks"></div>
+                <span class="hp-text" id="hp-text">100 / 100</span>
+              </div>
+              <div class="shield-line"><div class="shield-fill" id="shield-fill"></div><span id="shield-text">护盾 0</span></div>
+            </div>
+          </div>
+
+          <div class="hud-tc">
+            <div class="floor-chip">
+              <span class="floor-num" id="hud-floor">1F</span>
+              <span class="floor-name" id="hud-room">工位区 · 01</span>
+            </div>
+            <div class="timer" id="hud-timer">00:00</div>
+            <div class="wave-chip" id="hud-wave">准备中</div>
+          </div>
+
+          <div class="floor-progress" id="floor-progress"></div>
+
+          <div class="hud-tr">
+            <div class="stat gold"><img class="stat-ico" src="assets/ui/pxlkit/coin.png" alt="" /><b id="hud-gold">0</b></div>
+            <div class="stat kills"><i>✕</i><b id="hud-kills">0</b></div>
+            <div class="relic-row" id="hud-relics"></div>
+          </div>
+
+          <div class="boss-bar" id="boss-bar" hidden>
+            <div class="boss-info">
+              <span class="boss-tag">FINAL BOSS</span>
+              <b id="boss-name">周报魔王 · KPI-0</b>
+              <span id="boss-phase">阶段 1</span>
+            </div>
+            <div class="boss-track"><div class="boss-fill" id="boss-fill"></div><div class="boss-marks"></div></div>
+          </div>
+
+          <div class="hud-bl">
+            <div class="cool" id="dash-cool">
+              <div class="cool-ring"></div>
+              <div class="cool-key">SPACE</div>
+              <div class="cool-name">闪避</div>
+            </div>
+            <div class="cool" id="skill-cool">
+              <div class="cool-ring"></div>
+              <canvas class="cool-icon" id="skill-icon" width="48" height="48"></canvas>
+              <div class="cool-key">Q</div>
+              <div class="cool-name">死线</div>
+            </div>
+            <div class="cool" id="skill2-cool">
+              <div class="cool-ring"></div>
+              <canvas class="cool-icon" id="skill2-icon" width="48" height="48"></canvas>
+              <div class="cool-key">R</div>
+              <div class="cool-name">凝视</div>
+            </div>
+          </div>
+
+          <div class="xp-wrap">
+            <div class="xp-label">LV <b id="xp-level">1</b></div>
+            <div class="xp-track"><div class="xp-fill" id="xp-fill"></div><div class="xp-ticks"></div></div>
+            <span class="xp-text" id="xp-text">0 / 30</span>
+          </div>
+
+          <div class="hud-br">
+            <button class="build-mini" id="hud-build-btn" title="查看构筑 (TAB)">
+              <span id="hud-build-count">0</span>
+              <i>构筑</i>
+            </button>
+            <div class="weapon-chip">
+              <span class="w-tag">WEAPON</span>
+              <b id="hud-weapon">机械键盘</b>
+              <i id="hud-weapon-lv">Lv.1</i>
+              <div id="laser-heat" class="laser-heat" hidden role="meter" aria-label="激光热量" aria-valuemin="0" aria-valuemax="100"><span id="laser-heat-label">就绪</span><div><i id="laser-heat-fill"></i></div></div>
+            </div>
+            <button class="hud-btn" id="btn-pause" title="暂停 (ESC)"><img class="hud-pause-ico" src="assets/ui/pxlkit/pause.png" alt="" /></button>
+          </div>
+
+          <div id="interact" class="interact" hidden></div>
+          <div id="combat-toast" class="combat-toast"></div>
+          <div id="boss-dialogue" class="boss-dialogue" hidden><b id="bd-speaker">KPI-0</b><span id="bd-text"></span></div>
+          <div id="dmg-flash" class="dmg-flash"></div>
+          <div id="cutin" class="cutin" hidden>
+            <div class="cutin-shade"></div>
+            <div class="cutin-art"><img id="cutin-img" src="assets/abigail_full.webp" alt="" /></div>
+            <div class="cutin-label">
+              <span id="cutin-char">ABIGAIL</span>
+              <b id="cutin-skill">DEADLINE</b>
+              <i id="cutin-cn">死线</i>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= CHOICE ================= -->
+        <section id="screen-choice" class="screen overlay choice-screen" hidden>
+          <div class="choice-head">
+            <div class="choice-eyebrow" id="choice-eyebrow">PERFORMANCE REVIEW</div>
+            <h2 id="choice-title">绩效评估</h2>
+            <p id="choice-sub">选择一项能力，继续加班。</p>
+          </div>
+          <div class="choice-cards" id="choice-cards"></div>
+          <div class="choice-foot">
+            <button id="choice-reroll" class="btn btn-ghost btn-reroll">
+              <span>重掷</span><em id="reroll-cost">¥20</em>
+            </button>
+            <span class="choice-hint" id="choice-hint">按 1 / 2 / 3 选择 · TAB 查看构筑</span>
+          </div>
+        </section>
+
+        <!-- ================= PAUSE ================= -->
+        <section id="screen-pause" class="screen overlay pause-screen" hidden>
+          <div class="pause-card">
+            <div class="pause-employee">
+              <img id="pause-portrait" src="assets/abigail_full.webp" alt="当前员工立绘" />
+              <div>
+                <span class="pause-eyebrow">CURRENT EMPLOYEE</span>
+                <b id="pause-name">阿比盖尔</b>
+                <span id="pause-skill">Q 死线 · R 凝视</span>
+              </div>
+            </div>
+            <div class="pause-head">
+              <span class="pause-eyebrow">PAUSED</span>
+              <h2>摸鱼时间</h2>
+              <p>世界停止转动，工资照扣。</p>
+            </div>
+            <div class="pause-build" id="pause-build"></div>
+            <div class="pause-actions">
+              <button class="btn btn-primary" id="btn-resume">继续加班 <em>ESC</em></button>
+              <button class="btn btn-ghost" id="btn-pause-settings">设置</button>
+              <div class="pause-subactions">
+                <button class="btn btn-ghost" id="btn-pause-dossier">员工档案</button>
+                <button class="btn btn-ghost" id="btn-pause-manual">员工手册</button>
+              </div>
+              <button class="btn btn-ghost btn-danger" id="btn-pause-quit">放弃今天</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= GAME OVER ================= -->
+        <section id="screen-over" class="screen overlay over-screen" hidden>
+          <div class="over-card">
+            <div class="over-side">
+              <img id="over-contract-art" class="over-contract-art" src="assets/ui/challenges/overtime-contract.png" alt="挑战合同" hidden />
+              <div class="over-stamp" id="over-stamp">辞退</div>
+              <div class="over-grade" id="over-grade">B</div>
+              <div class="over-grade-label">本次绩效</div>
+            </div>
+            <div class="over-main">
+              <div class="over-eyebrow" id="over-eyebrow">SHIFT TERMINATED</div>
+              <h2 id="over-title">本日加班结束</h2>
+              <p id="over-sub">你被打印机吃掉了。</p>
+              <div class="over-stats" id="over-stats"></div>
+              <div class="over-build" id="over-build"></div>
+              <div class="over-actions">
+                <button class="btn btn-primary" id="btn-retry">再来一天 <em>ENTER</em></button>
+                <button class="btn btn-ghost" id="btn-menu">回到工位</button>
+                <button class="btn btn-ghost" id="btn-over-codex">图鉴</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= CODEX ================= -->
+        <section id="screen-codex" class="screen sheet-screen" hidden>
+          <div class="sheet">
+            <header class="sheet-head">
+              <div>
+                <div class="sheet-eyebrow">COMPANY ARCHIVE / 机密</div>
+                <h2>异常图鉴</h2>
+                <p>记录这栋楼里不该存在的东西。见过的才会解锁。</p>
+              </div>
+              <div class="sheet-head-right">
+                <div class="codex-progress" id="codex-progress">已解锁 0 / 0</div>
+                <button class="close-btn" id="codex-close">✕</button>
+              </div>
+            </header>
+            <nav class="codex-tabs" id="codex-tabs">
+              <button class="tab is-active" data-tab="enemies">异常生物</button>
+              <button class="tab" data-tab="characters">员工档案</button>
+              <button class="tab" data-tab="weapons">办公武器</button>
+              <button class="tab" data-tab="relics">神秘遗物</button>
+            </nav>
+            <div class="codex-grid" id="codex-grid"></div>
+          </div>
+        </section>
+
+        <!-- ================= TRAINING ================= -->
+        <section id="screen-training" class="screen sheet-screen" hidden>
+          <div class="sheet sheet-narrow">
+            <header class="sheet-head">
+              <div>
+                <div class="sheet-eyebrow">HR PORTAL / 自愿加班</div>
+                <h2>员工培训</h2>
+                <p>用绩效点买断一点天赋。培训费不报销。</p>
+              </div>
+              <div class="sheet-head-right">
+                <div class="points-chip"><span>绩效点</span><b id="training-points">0</b></div>
+                <button class="close-btn" id="training-close">✕</button>
+              </div>
+            </header>
+            <div class="training-list" id="training-list"></div>
+            <div class="training-foot">
+              <span>绩效点来自每一局的结算，失败也有。</span>
+              <button class="link-btn" id="training-reset">重置全部存档</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= SETTINGS ================= -->
+        <section id="screen-settings" class="screen overlay settings-screen" hidden>
+          <div class="settings-card">
+            <header class="settings-head">
+              <div>
+                <div class="sheet-eyebrow">SYSTEM</div>
+                <h2>设置</h2>
+              </div>
+              <button class="close-btn" id="settings-close">✕</button>
+            </header>
+            <div class="setting-row">
+              <div><b>音乐</b><span>合成器浪潮，来自 24F 的电梯间</span></div>
+              <input type="range" id="set-music" min="0" max="100" step="1" />
+            </div>
+            <div class="setting-row">
+              <div><b>音效</b><span>键盘、订书机与惨叫</span></div>
+              <input type="range" id="set-sfx" min="0" max="100" step="1" />
+            </div>
+            <div class="setting-row">
+              <div><b>屏幕震动</b><span>受击与爆炸时的画面冲击</span></div>
+              <button class="switch is-on" id="set-shake"><i></i></button>
+            </div>
+            <div class="setting-row">
+              <div><b>自动瞄准</b><span>准星靠近目标时软锁定</span></div>
+              <button class="switch is-on" id="set-autoaim"><i></i></button>
+            </div>
+            <div class="setting-row">
+              <div><b>自动开火</b><span>远程辅助；关闭后按住射击键</span></div>
+              <button class="switch" id="set-autofire"><i></i></button>
+            </div>
+            <div class="setting-row">
+              <div><b>自动近战辅助</b><span>默认关闭 · 单击攻击，连续点击打出三连</span></div>
+              <button class="switch" id="set-automelee" aria-label="自动近战辅助"><i></i></button>
+            </div>
+            <div class="setting-row">
+              <div><b>精简特效</b><span>保留光束、预警、血条与伤害数字</span></div>
+              <button class="switch" id="set-reducedfx" aria-label="精简特效"><i></i></button>
+            </div>
+            <div class="setting-row">
+              <div><b>CRT 扫描线</b><span>复古显示器质感</span></div>
+              <button class="switch is-on" id="set-crt"><i></i></button>
+            </div>
+            <div class="setting-row">
+              <div><b>全屏</b><span>把工位占满</span></div>
+              <button class="btn btn-ghost btn-small" id="set-fullscreen">切换</button>
+            </div>
+            <footer class="settings-foot">
+              <span>自动保存于浏览器本地</span>
+              <span class="settings-ver">OVERTIME v1.0</span>
+              <span class="settings-credits">Icons by <a href="https://pxlkit.xyz" target="_blank" rel="noopener">Pxlkit</a> · Font: Fusion Pixel (OFL)</span>
+            </footer>
+          </div>
+        </section>
+
+        <!-- ================= STORY ================= -->
+        <section id="screen-story" class="screen story-screen" hidden>
+          <div class="story">
+            <div class="story-art">
+              <img id="story-img" src="assets/abigail_full.webp" alt="阿比盖尔立绘" />
+              <div class="story-art-shade"></div>
+              <div class="story-file">INCIDENT REPORT / 00:00</div>
+            </div>
+            <div class="story-body">
+              <div class="story-eyebrow">OVERTIME / 序章 · 加班费失踪事件</div>
+              <div class="story-page" id="story-page">01 / 04</div>
+              <h2 id="story-title">加班费未到账</h2>
+              <p id="story-text"></p>
+              <div class="story-chat">
+                <div class="story-chat-head">// 公司群 · 未读 99+</div>
+                <div class="chat-line"><span>00:13</span><b>HR</b><em>@所有人 本月工资以积分形式发放，积分不可兑换。</em></div>
+                <div class="chat-line"><span>00:19</span><b>行政</b><em>厕所计时器已安装，超时自动开门。</em></div>
+                <div class="chat-line"><span>00:27</span><b>主管</b><em>两小时不回群消息，扣 20。</em></div>
+                <div class="chat-line"><span>00:31</span><b>老板</b><em>不叫裁员，叫毕业。大家要有始有终。</em></div>
+                <div class="chat-line"><span>00:36</span><b>财务</b><em>报销单下辈子到账。</em></div>
+                <div class="chat-line"><span>00:39</span><b>保洁</b><em>天台门锁了，但今天没锁。</em></div>
+              </div>
+              <div class="story-memo">
+                <span>内部通告 / INTERNAL NOTICE</span>
+                <b>今晚 00:00 起，电梯停运。加班费以积分形式发放。离职请走天台。</b>
+              </div>
+              <div class="story-note" id="story-note"></div>
+              <div class="story-actions">
+                <button class="btn btn-primary" id="story-next">继续</button>
+                <button class="btn btn-ghost" id="story-skip">跳过剧情</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= DOSSIER ================= -->
+        <section id="screen-dossier" class="screen sheet-screen dossier-screen" hidden>
+          <div class="dossier">
+            <div class="dossier-art">
+              <img id="dossier-art-img" src="assets/abigail_full.webp" alt="员工立绘" draggable="false" />
+              <div class="art-scan"></div>
+              <div class="art-frame"></div>
+              <div class="art-corner tl"></div><div class="art-corner tr"></div>
+              <div class="art-corner bl"></div><div class="art-corner br"></div>
+              <div class="art-tag">EMPLOYEE FILE</div>
+              <div class="art-name" id="dossier-art-name">ABIGAIL</div>
+              <div class="art-lock" id="dossier-art-lock" hidden>LOCKED<br /><span>未入职</span></div>
+            </div>
+            <div class="dossier-info">
+              <div class="sheet-eyebrow" id="dossier-eyebrow">INFINITY CORP / 员工档案</div>
+              <h2 id="dossier-name">阿比盖尔</h2>
+              <div class="dossier-title" id="dossier-title">异常实习生 · 高爆发 · 低容错</div>
+              <p class="dossier-lore" id="dossier-lore"></p>
+              <blockquote class="dossier-quote" id="dossier-quote"></blockquote>
+              <div class="dossier-traits" id="dossier-traits"></div>
+              <div class="dossier-stats" id="dossier-stats"></div>
+              <div class="dossier-eval" id="dossier-eval"></div>
+              <div class="dossier-skill">
+                <div class="dossier-skill-icon"><canvas id="dossier-skill-icon" width="64" height="64"></canvas></div>
+                <div class="dossier-skill-body">
+                  <div class="dossier-skill-eyebrow">EXCLUSIVE SKILL · Q</div>
+                  <b id="dossier-skill-name">死线 · DEADLINE</b>
+                  <p id="dossier-skill-desc"></p>
+                  <div class="dossier-skill-meta"><span id="dossier-skill-tag"></span><span id="dossier-skill-cd"></span></div>
+                </div>
+              </div>
+              <div class="dossier-skill dossier-skill2">
+                <div class="dossier-skill-icon"><canvas id="dossier-skill2-icon" width="64" height="64"></canvas></div>
+                <div class="dossier-skill-body">
+                  <div class="dossier-skill-eyebrow">SECONDARY SKILL · R</div>
+                  <b id="dossier-skill2-name">凝视 · GAZE</b>
+                  <p id="dossier-skill2-desc"></p>
+                  <div class="dossier-skill-meta"><span id="dossier-skill2-tag"></span><span id="dossier-skill2-cd"></span></div>
+                </div>
+              </div>
+              <div class="dossier-weapon" id="dossier-weapon"></div>
+              <div class="dossier-advice" id="dossier-advice"></div>
+              <div class="dossier-note" id="dossier-note"></div>
+              <div class="dossier-actions">
+                <button class="btn btn-primary" id="dossier-pick">选择这名员工</button>
+                <button class="btn btn-ghost" id="dossier-close">关闭</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= MANUAL ================= -->
+        <section id="screen-manual" class="screen sheet-screen manual-screen" hidden>
+          <div class="sheet manual-sheet">
+            <header class="sheet-head">
+              <div>
+                <div class="sheet-eyebrow">EMPLOYEE HANDBOOK / 内部资料</div>
+                <h2>员工手册</h2>
+                <p>午夜加班前请阅读。公司不承担阅读后的心理损伤。</p>
+              </div>
+              <div class="sheet-head-right">
+                <div class="manual-stamp">午夜版 · 00:00</div>
+                <button class="close-btn" id="manual-close">✕</button>
+              </div>
+            </header>
+            <div class="manual-grid">
+              <article class="manual-card">
+                <div class="manual-index">01</div>
+                <h3>操作 / CONTROLS</h3>
+                <div class="manual-keys">
+                  <div><kbd>WASD</kbd><span>移动</span></div>
+                  <div><kbd>鼠标</kbd><span>瞄准 · 左键开火/聚焦</span></div>
+                  <div><kbd>SPACE</kbd><span>闪避（可充能）</span></div>
+                  <div><kbd>Q</kbd><span>角色专属技能</span></div>
+                  <div><kbd>R</kbd><span>副技能（凝视 / 回车）</span></div>
+                  <div><kbd>E</kbd><span>进门 / 开箱 / 交互</span></div>
+                  <div><kbd>ESC</kbd><span>暂停 / 构筑</span></div>
+                </div>
+                <p class="manual-note">触屏：左摇杆移动，按住「攻击」射击；近战每点一次挥砍。靠近门或终端按「交互」。激光约 6 秒过热，松手散热；按住射击同样会自动冷却后恢复。</p>
+              </article>
+              <article class="manual-card">
+                <div class="manual-index">02</div>
+                <h3>专属技能 / SKILLS</h3>
+                <div class="manual-skill">
+                  <b style="color:#8cffb0">阿比盖尔 · Q 死线 / R 凝视</b>
+                  <p>Q 蓄力切开直线，重创并处决残血异常；R 标记前方扇形，目标受伤 +30%、移速 -25%。</p>
+                </div>
+                <div class="manual-skill">
+                  <b style="color:#57f4ff">阿码 · Q 热修复 / R 回车重击</b>
+                  <p>Q 部署终端炮塔并清弹幕；R 突进砸键盘，范围伤害并眩晕。近战靠三连键击贴身输出。</p>
+                </div>
+                <p class="manual-note">技能冷却与「工会之怒」等升级联动。</p>
+              </article>
+              <article class="manual-card">
+                <div class="manual-index">03</div>
+                <h3>肉鸽循环 / LOOP</h3>
+                <p>清空房间后选择左右门。门代表下一间的额外奖励：精英掉遗物、资料室出宝箱、事件房有交易、吸烟区回血、自动贩卖机可购买升级。</p>
+                <p>升级三选一可以重掷；经验来自击杀与清房。金币用于重掷和商店。</p>
+                <p class="manual-note">清房会回复少量生命；Boss 房入口回复 50% 生命。</p>
+              </article>
+              <article class="manual-card">
+                <div class="manual-index">04</div>
+                <h3>异常应对 / SURVIVAL</h3>
+                <p>红圈、红线、扇形高亮都是攻击预警。闪避可以穿过弹幕；不要和续命尸站在同一条直线上。</p>
+                <p>周报魔王三阶段：报表弹幕、盖章追踪、激光扫射、红圈轰炸。阶段切换时会清空一次弹幕，趁机输出。</p>
+                <p class="manual-note">低血量时屏幕边缘会泛红。活着比 DPS 重要。</p>
+              </article>
+            </div>
+            <footer class="manual-foot">
+              <span>INFINITY CORP. · 员工生存指南 v1.0</span>
+              <span>“公司不会忘记你。公司会记得给你加活。”</span>
+            </footer>
+          </div>
+        </section>
+
+        <section id="screen-challenges" class="screen overlay" hidden>
+          <div class="challenge-panel">
+            <header class="challenge-header"><img src="assets/ui/challenges/overtime-contract.png" alt="霓虹加班合同与打卡钟" /><div><span class="eyebrow">OPTIONAL CLAUSES / 自选条款</span><h2>签一份新的加班合同</h2><p>沿用当前员工与武器、培训等级。成绩各自保存，奖励计入绩效点。</p></div><button class="close-btn" id="challenges-close" aria-label="关闭挑战合同">✕</button></header>
+            <div id="challenge-cards" class="challenge-cards"></div>
+          </div>
+        </section>
+
+        <!-- ================= TOUCH ================= -->
+        <div id="touch-layer" class="touch-layer" hidden>
+          <div class="stick" id="stick-base"><div class="stick-knob" id="stick-knob"></div></div>
+          <button class="touch-btn touch-dash" id="touch-dash">闪避</button>
+          <button class="touch-btn touch-skill" id="touch-skill">技能</button>
+          <button class="touch-btn touch-skill2" id="touch-skill2">副技</button>
+          <button class="touch-btn touch-pause" id="touch-pause">II</button>
+          <button class="touch-btn touch-fire" id="touch-fire">攻击</button>
+          <button class="touch-btn touch-interact" id="touch-interact">交互</button>
+        </div>
+
+        <div id="toast-zone" class="toast-zone"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/libs/rough.js"></script>
+<script src="js/libs/canvas-confetti.min.js"></script>
+<script src="js/util.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/data.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/combat.js"></script>
+<script src="js/modes.js"></script>
+<script src="js/actors.js"></script>
+<script src="js/world.js"></script>
+<script src="js/exploration.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/challenge-ui.js"></script>
+<script src="js/game.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
