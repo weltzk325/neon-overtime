@@ -1,0 +1,6 @@
+/*.zip
+/test-results.json
+/test-shots/
+/__pycache__/
+*.pyc
+*.log
