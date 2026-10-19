@@ -6,9 +6,34 @@
 
 于是她决定：既然公司不讲劳动法，那就用办公用品讲。
 
-本仓库是可直接运行的最新版游戏发布包，**不含制作视频、测试截图、研究文档和阶段回退包**。
+本仓库保留可直接运行的原网页，并提供独立的小红书小工具 H5 版本。制作视频、生成的上传包、测试截图和阶段回退包不纳入源码仓库。
 
-## 直接开玩
+## 版本入口
+
+| 版本 | 入口 |
+|-|-|
+| 原网页 | 根目录 `index.html` |
+| 小红书小工具 H5 | [`xiaohongshu/package/index.html`](xiaohongshu/package/index.html) |
+
+## 小红书小工具 H5
+
+小红书版本完整放在 [`xiaohongshu/`](xiaohongshu/README.md)，可直接本地预览；不需要安装 Node.js 或构建依赖。手机支持虚拟摇杆、攻击/闪避/双技能/交互/暂停，竖屏会自动旋转舞台并校正触控方向。
+
+在仓库根目录运行以下命令生成上传包：
+
+```sh
+python xiaohongshu/make_zip.py
+```
+
+输出 `xiaohongshu/neon-overtime-xhs-tool.zip`。**不要直接压缩整个 `xiaohongshu/` 目录上传**；上传包只包含 `package/` 内的运行文件，ZIP 根目录直接是 `index.html`。
+
+H5 优先使用小红书端侧异步存档，进度与原网页分开。运行包中的字体、图标和图形库许可全文收在 `third-party-licenses.json`。
+
+已完成 **11/11 项本地 H5 发布包检查**，包含严格 CSP、键鼠/触屏、横竖屏坐标、存档与挑战；这些测试使用模拟端接口。用户于 2026-10-19 确认此前上传成功，实体 Android/iOS 小红书容器仍待验收。
+
+详细步骤见[小工具说明](xiaohongshu/README.md)，测试范围见[验证记录](xiaohongshu/VALIDATION.md)。
+
+## 原网页直接开玩
 
 1. 下载或克隆本仓库。
 2. 双击 `index.html`。
@@ -48,7 +73,7 @@ python -m http.server 8000
 - 清房后的终端调查、路线风险提示与三选一奖励
 - 剧情、员工档案、图鉴、局外培训、独立挑战纪录与触屏操作
 
-## 技术栈
+## 原网页技术栈
 
 - 纯 HTML + CSS + 经典 `<script>`，可直接通过 `file://` 运行
 - Canvas 2D 固定 960×540 世界坐标，120Hz 固定步长逻辑更新
@@ -61,7 +86,7 @@ python -m http.server 8000
 - **Fusion Pixel Font**：SIL Open Font License 1.1，许可证位于 `assets/fonts/`
 - **Pxlkit**：像素图标，Pxlkit Asset License；图标署名 `Pxlkit / https://pxlkit.xyz`，许可证位于 `assets/ui/pxlkit/`
 - **Kenney UI Audio**：CC0 1.0，许可证位于 `assets/audio/kenney/`
-- **canvas-confetti**：MIT，许可证位于 `js/libs/`
+- **canvas-confetti**：ISC，许可证位于 `js/libs/`
 - **rough.js**：MIT，许可证位于 `js/libs/`
 
 角色立绘、像素角色和游戏内 UI 为本项目素材；游戏运行所需文件均随仓库提供。
